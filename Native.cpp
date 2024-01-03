@@ -1,3 +1,5 @@
+
+
 #include "pch.h"
 #include "Native.h"
 #include <stdio.h>
@@ -10,6 +12,8 @@
 #include <sstream>
 #include <direct.h>
 using namespace std;
+
+
 
 static random_device s_seed; //硬件生成随机种子
 static ranlux48 s_randomEngine(s_seed()); //利用种子生成随机数引擎
