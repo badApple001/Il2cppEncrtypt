@@ -1,5 +1,3 @@
-
-
 #include "pch.h"
 #include "Native.h"
 #include <stdio.h>
@@ -26,6 +24,31 @@ unsigned int get_random_uint() {
 }
 
 
+void CopyTo(const char* s, const char* d) {
+	std::ifstream  src(s, std::ios::binary);
+	std::ofstream  dst(d, std::ios::binary);
+	dst << src.rdbuf();
+}
+
+
+bool Contain(const char* path, const char* dest) {
+	std::ifstream infile(path, std::ios::in | std::ios::binary | std::ios::ate);
+	size_t size = infile.tellg();
+	infile.seekg(0, std::ios::beg);
+	char* buffer = new char[size];
+	infile.read(buffer, size);
+	infile.close();
+	std::string alltext(buffer, size);
+	delete[] buffer;
+	return alltext.find(dest) != std::string::npos;
+}
+
+bool CheackUnityVersion(const char* path) {
+	return Contain(path, "2021.3.22f1");
+}
+
+
+//加密混淆核心逻辑
 char* encrtypt_file(char* src, size_t& file_size) {
 
 	//随机密钥长度
@@ -70,12 +93,12 @@ char* encrtypt_file(char* src, size_t& file_size) {
 	return des;
 }
 
-
+//大端转换小端
 int get_little_endian(unsigned int x) {
 	return ((x >> 24) & 0xff) | ((x << 8) & 0xff0000) | ((x >> 8) & 0xff00) | ((x << 24) & 0xff000000);
 }
 
-
+//文件是否存在
 bool file_exist(const char* path) {
 	struct stat _Stat;
 	if (stat(path, &_Stat) != 0) {
@@ -85,7 +108,7 @@ bool file_exist(const char* path) {
 	return true;
 }
 
-
+//输出日志
 void Log(const char* fmt, ...) {
 	if (s_logCallback == NULL)return;
 	char acLogStr[512];// = { 0 };
@@ -96,13 +119,11 @@ void Log(const char* fmt, ...) {
 	s_logCallback(acLogStr, strlen(acLogStr));
 }
 
-void CopyTo(const char* s, const char* d) {
-	std::ifstream  src(s, std::ios::binary);
-	std::ofstream  dst(d, std::ios::binary);
-	dst << src.rdbuf();
-}
-
+//外部调用
 void OverrideLoader(char* path) {
+
+	Log("override Loader code...");
+
 	char* workpath = _getcwd(NULL, 0);
 	Log(workpath);
 
@@ -137,6 +158,10 @@ void OverrideLoader(char* path) {
 	string dest_loaderCpp = dest + "\\unityLibrary\\src\\main\\Il2CppOutputProject\\IL2CPP\\libil2cpp\\vm\\MetadataLoader.cpp";
 	string dest_memoryMappedFileH = dest + "\\unityLibrary\\src\\main\\Il2CppOutputProject\\IL2CPP\\libil2cpp\\utils\\MemoryMappedFile.h";
 	string dest_memoryMappedFileCpp = dest + "\\unityLibrary\\src\\main\\Il2CppOutputProject\\IL2CPP\\libil2cpp\\utils\\MemoryMappedFile.cpp";
+	string unity_version_file1 = localpath + "\\unityLibrary\\src\\main\\resources\\META-INF\\com.android.games.engine.build_fingerprint";
+	string unity_version_file2 = localpath + "\\unityLibrary\\build\\il2cpp_armeabi-v7a_ReleasePlus\\il2cpp_cache\\buildstate\\bee-inputdata.json";
+	string unity_version_file3 = localpath + "\\unityLibrary\\build\\il2cpp_armeabi-v7a_ReleasePlus\\il2cpp_cache\\buildstate\\bee.dag.json";
+
 
 	if (!file_exist(dest_loaderCpp.c_str()))
 	{
@@ -153,6 +178,10 @@ void OverrideLoader(char* path) {
 		Log("error: not found dest memoryMapped source file");
 		return;
 	}
+	if (!CheackUnityVersion(unity_version_file1.c_str()) && !CheackUnityVersion(unity_version_file2.c_str()) && !CheackUnityVersion(unity_version_file3.c_str())) {
+		Log("error: unity version err.");
+		return;
+	}
 
 	CopyTo(new_loaderCpp.c_str(), dest_loaderCpp.c_str());
 	CopyTo(new_memoryMappedFileCpp.c_str(), dest_memoryMappedFileCpp.c_str());
@@ -166,6 +195,7 @@ void OverrideLoader(char* path) {
 	Log("override Loader code complete.");
 }
 
+//外部调用
 void EncryptionCode(char* export_android_path)
 {
 	//wait input
@@ -214,6 +244,7 @@ void EncryptionCode(char* export_android_path)
 	Log("call cpp complete.");
 }
 
+//日志回调接口
 void SetDisplayLog(LogCallback callback)
 {
 	s_logCallback = callback;
