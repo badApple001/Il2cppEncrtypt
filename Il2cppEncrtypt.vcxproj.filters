@@ -24,6 +24,9 @@
     <ClInclude Include="Native.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="File.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">

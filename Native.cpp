@@ -9,6 +9,7 @@
 #include <climits>
 #include <sstream>
 #include <direct.h>
+#include "File.hpp"
 using namespace std;
 
 
@@ -41,10 +42,6 @@ bool Contain(const char* path, const char* dest) {
 	std::string alltext(buffer, size);
 	delete[] buffer;
 	return alltext.find(dest) != std::string::npos;
-}
-
-bool CheackUnityVersion(const char* path) {
-	return Contain(path, "2021.3.22f1");
 }
 
 
@@ -158,11 +155,6 @@ void OverrideLoader(char* path) {
 	string dest_loaderCpp = dest + "\\unityLibrary\\src\\main\\Il2CppOutputProject\\IL2CPP\\libil2cpp\\vm\\MetadataLoader.cpp";
 	string dest_memoryMappedFileH = dest + "\\unityLibrary\\src\\main\\Il2CppOutputProject\\IL2CPP\\libil2cpp\\utils\\MemoryMappedFile.h";
 	string dest_memoryMappedFileCpp = dest + "\\unityLibrary\\src\\main\\Il2CppOutputProject\\IL2CPP\\libil2cpp\\utils\\MemoryMappedFile.cpp";
-	string unity_version_file1 = localpath + "\\unityLibrary\\src\\main\\resources\\META-INF\\com.android.games.engine.build_fingerprint";
-	string unity_version_file2 = localpath + "\\unityLibrary\\build\\il2cpp_armeabi-v7a_ReleasePlus\\il2cpp_cache\\buildstate\\bee-inputdata.json";
-	string unity_version_file3 = localpath + "\\unityLibrary\\build\\il2cpp_armeabi-v7a_ReleasePlus\\il2cpp_cache\\buildstate\\bee.dag.json";
-
-
 	if (!file_exist(dest_loaderCpp.c_str()))
 	{
 		Log("error: not found dest loaderCpp");
@@ -178,8 +170,9 @@ void OverrideLoader(char* path) {
 		Log("error: not found dest memoryMapped source file");
 		return;
 	}
-	if (!CheackUnityVersion(unity_version_file1.c_str()) && !CheackUnityVersion(unity_version_file2.c_str()) && !CheackUnityVersion(unity_version_file3.c_str())) {
-		Log("error: unity version err.");
+	if (File::Extract((dest + "\\unityLibrary\\src\\main\\assets\\bin\\Data\\data.unity3d").c_str(), 0x12, 11) != "2021.3.22f1") {
+		//避免不同版本il2cpp源码不同 导致可能能正常跑起来 但是线上会引发崩溃 
+		Log("version erro: must be 2021.3.22f1");
 		return;
 	}
 
@@ -192,12 +185,21 @@ void OverrideLoader(char* path) {
 		workpath = NULL;
 	}
 
+
+	Log("owner: 31games");
+	Log("anchor: https://geek7.blog.csdn.net/");
+	Log("email: isysprey@foxmail.com");
 	Log("override Loader code complete.");
 }
 
 //外部调用
 void EncryptionCode(char* export_android_path)
 {
+	if (NULL == export_android_path || strcmp(export_android_path, "") == 0) {
+		Log("export android path is null: %s", export_android_path);
+		return;
+	}
+
 	//wait input
 	string global_metadata_path = export_android_path;
 	if (NULL == strstr(global_metadata_path.c_str(), "global-metadata.dat")) {
