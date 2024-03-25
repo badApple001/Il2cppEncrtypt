@@ -1,4 +1,7 @@
 # Unity Global-metadata 源码映射文件加密
+- 可以实现 Android APK加固
+- 可以实现 iOS 加固
+- 可以实现 代码混淆
 
 ## Unitypackage download
 
